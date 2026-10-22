@@ -1,0 +1,5 @@
+[theme]
+name=React-Glass-Greeter
+description=Sumit_React_Glass_Greeter
+engine=lightdm-webkit-greeter
+url=index.html
