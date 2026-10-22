@@ -1,8 +1,8 @@
 import { createBrowserRouter, createRoutesFromElements, Route } from "react-router";
-import Void from "./Void.tsx";
-import RootLayout from "./RootLayout.tsx";
-import IdleScreen from "./IdleScreen.tsx";
-import Login from "./Login.tsx";
+import Void from "../page/Void.tsx";
+import RootLayout from "../page/RootLayout.tsx";
+import IdleScreen from "../page/IdleScreen.tsx";
+import Login from "../page/Login.tsx";
 
 export const router = createBrowserRouter(
   createRoutesFromElements(
