@@ -5,9 +5,42 @@ import useDynamicTheme from "../component/theme";
 import "./rootLayout.css";
 import DateTime from "../component/DateTime";
 import { ClockProvider } from "../context/ClockProvider";
+import React, { useState } from "react";
+import Weather from "../component/Weather";
+import Player from "../component/Music";
+import Event from "../component/Events";
+import Battery from "../component/Battery";
+import Notification from "../component/Notification";
 
 export default function RootLayout() {
+  const defaultWidth: number = 400;
+  const [lWidth, setLWidth] = useState<number>(defaultWidth);
+
   useDynamicTheme(DefaultBG);
+
+  function startResize(event: React.MouseEvent<HTMLDivElement>) {
+    event.preventDefault();
+
+    const startX = event.clientX;
+    const initialWidth = lWidth;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const dx = e.clientX - startX;
+      let newWidth = initialWidth - dx;
+      setLWidth(Math.max(defaultWidth, Math.min(newWidth, 1000)));
+    };
+
+    const handleMouseUp = () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "default";
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    document.body.style.cursor = "ew-resize";
+  }
+
   return (
     <div className="text-white font-chivo antialiased h-screen w-screen flex selection:bg-accent-blue selection:text-black">
       {/* Main Container */}
@@ -18,8 +51,29 @@ export default function RootLayout() {
             <Outlet />
           </div>
           {/* Right Side: Info Panel */}
-          <div className="w-105 bg-panel-bg backdrop-blur-2xl border-l border-white/5 flex flex-col p-8 relative shadow-2xl">
-            <DateTime variant="short" />
+          <div
+            style={{ width: `${lWidth}px` }}
+            className="[backdrop-filter:url(#glass-distortion)_blur(10px)] border-l border-white/20 flex flex-col p-8 relative shadow-2xl transition-none overflow-auto scrollbar-thin"
+          >
+            <div
+              onMouseDown={startResize}
+              className="w-2 absolute -left-1 cursor-ew-resize h-full top-0 hover:bg-white/10 transition-colors z-10 bg-transparent"
+            />
+            <div className="flex justify-end items-center gap-4 text-xs font-medium text-white/80 mb-12">
+              <DateTime variant="short" />
+              <Battery className="" />
+            </div>
+
+            <Weather className="" display="login" />
+            <hr className="border-white/10 mb-8"></hr>
+
+            <Event className="mb-1" />
+            <hr className="border-white/10 mb-8"></hr>
+
+            <Notification className="mb-2" />
+            <hr className="border-white/10 mb-8"></hr>
+
+            <Player />
           </div>
         </ClockProvider>
       </div>

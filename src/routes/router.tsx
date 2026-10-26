@@ -1,10 +1,10 @@
-import { createBrowserRouter, createRoutesFromElements, Route } from "react-router";
+import { createMemoryRouter, createRoutesFromElements, Route } from "react-router";
 import Void from "../page/Void.tsx";
 import RootLayout from "../page/RootLayout.tsx";
 import IdleScreen from "../page/IdleScreen.tsx";
 import Login from "../page/Login.tsx";
 
-export const router = createBrowserRouter(
+export const router = createMemoryRouter(
   createRoutesFromElements(
     <>
       <Route path="/void" element={<Void />} />

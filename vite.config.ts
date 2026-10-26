@@ -31,6 +31,6 @@ export default defineConfig({
       },
     ],
   },
-  // base: `./`,
+  base: `./`,
   plugins: lazyPlugins(() => [tailwindcss(), react()]),
 });

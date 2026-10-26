@@ -27,9 +27,9 @@ function DateTime({ variant = "full" }: DateTimeProp) {
 
   if (variant == "short") {
     return (
-      <div className="">
+      <span>
         {format.weekShort.format(clock)} {day} {format.monthsShort.format(clock)}
-      </div>
+      </span>
     );
   }
 
