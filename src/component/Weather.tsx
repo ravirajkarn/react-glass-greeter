@@ -86,7 +86,7 @@ export default function Weather({
     if (!weatherData?.hourly?.time) return null;
 
     const index = getCurrentWeatherIndex(weatherData.hourly.time, currentHourSlot);
-    const temp = ((Math.round(weatherData.hourly.temperature_2m[index]) - 32) * 5) / 9;
+    const temp = Math.round(((weatherData.hourly.temperature_2m[index] - 32) * 5) / 9);
     const code = weatherData.hourly.weather_code?.[index];
 
     // Calculate today's High & Low from the current 24-hour slice surrounding the day

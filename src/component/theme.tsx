@@ -70,31 +70,31 @@ export default function useDynamicTheme(backgroundImageUrl: string) {
     return localStorage.getItem("theme") || "";
   });
 
-  useEffect(() => {
-    if (!backgroundImageUrl) return;
+  // useEffect(() => {
+  //   if (!backgroundImageUrl) return;
 
-    document.body.style.backgroundImage = `url(${backgroundImageUrl})`;
-    document.body.classList.add(
-      "bg-cover",
-      "bg-no-repeat",
-      "bg-center",
-      "bg-fixed",
-      "min-h-screen",
-      "overflow-hidden",
-    );
+  //   document.body.style.backgroundImage = `url(${backgroundImageUrl})`;
+  //   document.body.classList.add(
+  //     "bg-cover",
+  //     "bg-no-repeat",
+  //     "bg-center",
+  //     "bg-fixed",
+  //     "min-h-screen",
+  //     "overflow-hidden",
+  //   );
 
-    return () => {
-      document.body.style.backgroundImage = "";
-      document.body.classList.remove(
-        "bg-cover",
-        "bg-no-repeat",
-        "bg-center",
-        "bg-fixed",
-        "min-h-screen",
-        "overflow-hidden",
-      );
-    };
-  }, [backgroundImageUrl]);
+  //   return () => {
+  //     document.body.style.backgroundImage = "";
+  //     document.body.classList.remove(
+  //       "bg-cover",
+  //       "bg-no-repeat",
+  //       "bg-center",
+  //       "bg-fixed",
+  //       "min-h-screen",
+  //       "overflow-hidden",
+  //     );
+  //   };
+  // }, [backgroundImageUrl]);
 
   useEffect(() => {
     if (backgroundImageUrl) {
@@ -113,7 +113,7 @@ export default function useDynamicTheme(backgroundImageUrl: string) {
       document.documentElement.dataset.theme = theme;
       localStorage.setItem("theme", theme);
     }
-  }, [theme, setTheme]);
+  }, [theme]);
 
   return theme;
 }

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { MdNotifications, MdCheckCircle, MdWarning, MdMessage } from "react-icons/md";
+import "./Notification.css";
 
 interface NotificationItem {
   id: string;

@@ -47,7 +47,7 @@ export default function Event({ className = "" }: EventProps) {
           MOCK_EVENTS.map((event) => (
             <div key={event.id} className="flex gap-4 group">
               {/* Timeline Indicator */}
-              <div className="flex flex-col items-center mt-1.5">
+              <div className="flex flex-col items-center mt-1.5 ml-1.5">
                 <div
                   className={`size-2.5 rounded-full ${event.dotColor} shadow-[0_0_8px_currentColor] opacity-80`}
                 />

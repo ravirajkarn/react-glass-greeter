@@ -1,5 +1,7 @@
 import { useState } from "react";
+import { BsAppleMusic } from "react-icons/bs";
 import { MdPlayArrow, MdPause, MdSkipNext, MdSkipPrevious, MdMusicNote } from "react-icons/md";
+import { CustomImage } from "./Image";
 
 interface PlayerProps {
   className?: string;
@@ -34,10 +36,11 @@ export default function Player({ className }: PlayerProps) {
         <div className="flex items-center gap-4">
           {/* Album Art */}
           <div className="relative size-20 rounded-xl overflow-hidden shadow-[0_4px_12px_rgba(0,0,0,0.3)] shrink-0 group">
-            <img
+            <CustomImage
               src={MOCK_TRACK.cover}
               alt="Album cover"
               className={`w-full h-full object-cover transition-transform duration-700 ${isPlaying ? "scale-110" : "scale-100"}`}
+              fallback={<BsAppleMusic className="w-1/3 h-1/3 animate-pulse" />}
             />
             {/* Subtle dark overlay when playing */}
             <div

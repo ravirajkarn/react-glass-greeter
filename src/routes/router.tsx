@@ -1,16 +1,14 @@
 import { createMemoryRouter, createRoutesFromElements, Route } from "react-router";
-import Void from "../page/Void.tsx";
 import RootLayout from "../page/RootLayout.tsx";
-import IdleScreen from "../page/IdleScreen.tsx";
+import LockScreen from "../page/LockScreen.tsx";
 import Login from "../page/Login.tsx";
 
 export const router = createMemoryRouter(
   createRoutesFromElements(
     <>
-      <Route path="/void" element={<Void />} />
       <Route path="/" element={<RootLayout />}>
-        <Route index element={<IdleScreen />} />
-        <Route path="login" element={<Login />} />
+        <Route path="lockScreen" element={<LockScreen />} />
+        <Route index element={<Login />} />
       </Route>
     </>,
   ),
