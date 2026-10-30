@@ -36,7 +36,7 @@ export default function User() {
   };
 
   return (
-    <form onSubmit={handleLogin} className="absolute top-1/2 left-16 -translate-y-1/2 w-105">
+    <form onSubmit={handleLogin} className="absolute top-1/2 -translate-y-1/2 w-105">
       {/* User Info */}
       <div className="flex items-center gap-4 mb-8">
         {/* Avatar with Fallback */}

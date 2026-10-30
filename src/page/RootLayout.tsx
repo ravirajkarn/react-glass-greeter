@@ -56,7 +56,7 @@ export default function RootLayout() {
           <div className="flex h-full w-full relative z-10">
             <ClockProvider>
               {/* Left Side: Login Area */}
-              <div className="flex-1 flex flex-col relative px-16 py-12 overflow-hidden">
+              <div className="flex-1 flex flex-col relative px-16 py-12 overflow-hidden h-full w-full">
                 <AnimatedOutlet />
               </div>
 

@@ -1,46 +1,54 @@
-import { useMemo } from "react";
+import React from "react";
 import { useClock } from "../context/ClockContext";
 
-interface DateTimeProp {
+export interface DateTimeProps {
   variant?: "full" | "short";
+  className?: string;
 }
 
-function DateTime({ variant = "full" }: DateTimeProp) {
+const FORMATTERS = {
+  time: new Intl.DateTimeFormat(undefined, {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  }),
+  weekShort: new Intl.DateTimeFormat(undefined, { weekday: "short" }),
+  monthShort: new Intl.DateTimeFormat(undefined, { month: "short" }),
+  weekLong: new Intl.DateTimeFormat(undefined, { weekday: "long" }),
+  monthLong: new Intl.DateTimeFormat(undefined, { month: "long" }),
+};
+
+const DateTime = React.memo(function DateTime({ variant = "full", className = "" }: DateTimeProps) {
   const clock = useClock();
 
-  const format = useMemo(() => {
-    return {
-      time: new Intl.DateTimeFormat(undefined, {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        hour12: true,
-      }),
-      weekLong: new Intl.DateTimeFormat(undefined, { weekday: "long" }),
-      monthsLong: new Intl.DateTimeFormat(undefined, { month: "long" }),
-      monthsShort: new Intl.DateTimeFormat(undefined, { month: "short" }),
-      weekShort: new Intl.DateTimeFormat(undefined, { weekday: "short" }),
-    };
-  }, []);
+  const renderContent = () => {
+    const day = clock.getDate().toString().padStart(2, "0");
 
-  const day = clock.getDate().toString().padStart(2, "0");
+    if (variant === "short") {
+      return (
+        <span className="uppercase tracking-wider">
+          {FORMATTERS.weekShort.format(clock)} {day} {FORMATTERS.monthShort.format(clock)}
+        </span>
+      );
+    }
 
-  if (variant == "short") {
     return (
-      <span>
-        {format.weekShort.format(clock)} {day} {format.monthsShort.format(clock)}
-      </span>
+      <div className="flex flex-col gap-1 ">
+        <div className="uppercase tracking-[0.15em] pl-2 font-bold text-white/60 dark:text-black/60">
+          {FORMATTERS.weekLong.format(clock)} &middot; {FORMATTERS.monthLong.format(clock)} {day}
+        </div>
+        <div className="text-4xl font-light tracking-tight leading-none text-[5rem] uppercase">
+          {FORMATTERS.time.format(clock)}
+        </div>
+      </div>
     );
-  }
+  };
 
   return (
-    <div className="uppercase">
-      <div>
-        {day} &middot; {format.monthsLong.format(clock)} {format.weekLong.format(clock)}
-      </div>
-      <div>{format.time.format(clock)}</div>
-    </div>
+    <time dateTime={clock.toISOString()} className={`block select-none ${className}`}>
+      {renderContent()}
+    </time>
   );
-}
+});
 
 export default DateTime;
