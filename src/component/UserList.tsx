@@ -4,7 +4,8 @@ import { FaUserAlt } from "react-icons/fa";
 import { motion, type Variants } from "motion/react";
 import { useNavigate } from "react-router";
 import { PiLockKeyThin } from "react-icons/pi";
-import { useLightDMUsers, type UserProfile } from "./User";
+import { useLightDMUsers } from "./User";
+import type { UserProfile } from "../utils/Profile";
 
 export interface UserListProps {
   className?: string;

@@ -1,93 +1,20 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { FaLongArrowAltRight, FaUserAlt } from "react-icons/fa";
 import { CgSpinner } from "react-icons/cg";
 import { motion } from "motion/react";
 import { useSearchParams } from "react-router";
 import { CustomImage } from "./Image";
-import { useLightDMUsers, type UserProfile } from "./User";
+import { greeter, type GreeterAuth } from "../services/WebGreeter";
+import type { UserProfile } from "../utils/Profile";
 
-export interface UserFormProps {
-  className?: string;
-}
-
-const UserForm = React.memo(function UserForm({ className = "" }: UserFormProps) {
-  const users = useLightDMUsers();
-  const [searchParams] = useSearchParams();
-
-  const [password, setPassword] = useState("");
+// ============================================================================
+// 1. SRP: Dedicated Hook for Keyboard Modifier State
+// ============================================================================
+function useCapsLock() {
   const [isCapsLock, setIsCapsLock] = useState(false);
-  const [isAuthenticating, setIsAuthenticating] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const inputRef = useRef<HTMLInputElement>(null);
-  const pendingPasswordRef = useRef<string | null>(null);
-
-  // O(1) user lookup with safe bounds fallback
-  const rawIndex = Number(searchParams.get("user") ?? 0);
-  const user: UserProfile | undefined = users[rawIndex] ?? users[0];
-
-  const ldm = typeof window !== "undefined" ? (window as any).lightdm : undefined;
-
-  // 1. Start PAM authentication session for the selected user
-  const startAuthSession = useCallback(
-    (username?: string) => {
-      if (!ldm || !username) return;
-      try {
-        if (ldm.in_authentication) {
-          ldm.cancel_authentication();
-        }
-        ldm.authenticate(username);
-      } catch (err) {
-        console.error("[LightDM] Failed to initialize authentication:", err);
-      }
-    },
-    [ldm],
-  );
-
-  // 2. Wire up LightDM signals (show_prompt & authentication_complete)
-  useEffect(() => {
-    if (!user?.username) return;
-
-    startAuthSession(user.username);
-
-    if (!ldm) return;
-
-    const handleShowPrompt = (_text: string, type: number) => {
-      // type 1 === secret/password prompt
-      if (type === 1 && pendingPasswordRef.current !== null) {
-        const pass = pendingPasswordRef.current;
-        pendingPasswordRef.current = null;
-        ldm.respond(pass);
-      }
-    };
-
-    const handleAuthComplete = () => {
-      setIsAuthenticating(false);
-
-      if (ldm.is_authenticated) {
-        const targetSession = user.session || ldm.default_session || ldm.sessions?.[0]?.key || null;
-        ldm.start_session(targetSession);
-      } else {
-        setErrorMessage("Invalid password. Please try again.");
-        setPassword("");
-        // Immediately restart PAM session for the next attempt
-        startAuthSession(user.username);
-        inputRef.current?.focus();
-      }
-    };
-
-    ldm.show_prompt?.connect(handleShowPrompt);
-    ldm.authentication_complete?.connect(handleAuthComplete);
-
-    return () => {
-      ldm.show_prompt?.disconnect(handleShowPrompt);
-      ldm.authentication_complete?.disconnect(handleAuthComplete);
-    };
-  }, [ldm, user?.username, user?.session, startAuthSession]);
-
-  // 3. CapsLock detection across key events and focus
   const checkCapsLock = useCallback(
-    (event: React.KeyboardEvent<HTMLInputElement> | React.MouseEvent<HTMLInputElement>) => {
+    (event: React.KeyboardEvent<HTMLElement> | React.MouseEvent<HTMLElement>) => {
       if ("getModifierState" in event) {
         setIsCapsLock(event.getModifierState("CapsLock"));
       }
@@ -95,36 +22,128 @@ const UserForm = React.memo(function UserForm({ className = "" }: UserFormProps)
     [],
   );
 
-  // 4. Form Submission Handler
+  return { isCapsLock, checkCapsLock };
+}
+
+// ============================================================================
+// 2. SRP & DIP: Dedicated Hook for PAM Authentication Lifecycle
+// Depends strictly on the segregated GreeterAuth interface.
+// ============================================================================
+
+// 1. Add an optional 'onFailure' callback to usePamAuth
+function usePamAuth(
+  user: UserProfile | undefined,
+  authService: GreeterAuth,
+  onFailure?: () => void,
+) {
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const pendingPasswordRef = useRef<string | null>(null);
+  const onFailureRef = useRef(onFailure);
+
+  // Keep latest callback reference without re-triggering the PAM effect
+  useEffect(() => {
+    onFailureRef.current = onFailure;
+  }, [onFailure]);
+
+  const username = user?.username;
+  const session = user?.session;
+
+  useEffect(() => {
+    if (!username) return;
+
+    authService.authenticate(username);
+
+    const unsubscribePrompt = authService.onShowPrompt((_text, type) => {
+      if (type === 1 && pendingPasswordRef.current !== null) {
+        const pass = pendingPasswordRef.current;
+        pendingPasswordRef.current = null;
+        authService.respond(pass);
+      }
+    });
+
+    const unsubscribeComplete = authService.onAuthComplete(() => {
+      setIsAuthenticating(false);
+
+      if (authService.isAuthenticated) {
+        authService.startSession(session);
+      } else {
+        setErrorMessage("Invalid password. Please try again.");
+        onFailureRef.current?.(); // <-- Batches password reset & focus in the same tick!
+        authService.authenticate(username);
+      }
+    });
+
+    return () => {
+      unsubscribePrompt();
+      unsubscribeComplete();
+    };
+  }, [authService, username, session]);
+
+  const submitPassword = useCallback(
+    (password: string) => {
+      if (!username || !password || isAuthenticating) return;
+
+      setErrorMessage(null);
+      setIsAuthenticating(true);
+
+      if (authService.inAuthentication) {
+        authService.respond(password);
+      } else {
+        pendingPasswordRef.current = password;
+        authService.authenticate(username);
+      }
+    },
+    [authService, username, isAuthenticating],
+  );
+
+  const clearError = useCallback(() => {
+    setErrorMessage((prev) => (prev ? null : prev));
+  }, []);
+
+  return { isAuthenticating, errorMessage, submitPassword, clearError };
+}
+
+// ============================================================================
+// 3. ISP & DIP: Presentational Form Component
+// ============================================================================
+export interface UserFormProps {
+  className?: string;
+  authService?: GreeterAuth;
+}
+
+const UserForm = React.memo(function UserForm({
+  className = "",
+  authService = greeter,
+}: UserFormProps) {
+  const [searchParams] = useSearchParams();
+  const [password, setPassword] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const users = useMemo(() => authService.getUsers(), [authService]);
+  const rawIndex = Number(searchParams.get("user") ?? 0);
+  const user: UserProfile | undefined = users[rawIndex] ?? users[0];
+
+  const { isCapsLock, checkCapsLock } = useCapsLock();
+
+  // Handle reset and focus directly inside the failure event callback
+  const handleAuthFailure = useCallback(() => {
+    setPassword("");
+    // Focus after the input re-enables from disabled={isAuthenticating}
+    requestAnimationFrame(() => {
+      inputRef.current?.focus();
+    });
+  }, []);
+
+  const { isAuthenticating, errorMessage, submitPassword, clearError } = usePamAuth(
+    user,
+    authService,
+    handleAuthFailure,
+  );
+
   const handleLogin = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!user || !password || isAuthenticating) return;
-
-    setErrorMessage(null);
-    setIsAuthenticating(true);
-
-    // Local Vite Browser Dev Mode Mock
-    if (!ldm) {
-      setTimeout(() => {
-        setIsAuthenticating(false);
-        if (password === "admin" || password === "1234") {
-          window.alert(`[Dev Mode] Logged in as ${user.username}`);
-        } else {
-          setErrorMessage("Invalid password (try '1234' in dev mode)");
-          setPassword("");
-          inputRef.current?.focus();
-        }
-      }, 500);
-      return;
-    }
-
-    // Production LightDM Execution
-    if (ldm.in_authentication) {
-      ldm.respond(password);
-    } else {
-      pendingPasswordRef.current = password;
-      startAuthSession(user.username);
-    }
+    submitPassword(password);
   };
 
   if (!user) return null;
@@ -168,7 +187,7 @@ const UserForm = React.memo(function UserForm({ className = "" }: UserFormProps)
           value={password}
           onChange={(e) => {
             setPassword(e.target.value);
-            if (errorMessage) setErrorMessage(null);
+            clearError();
           }}
           onKeyDown={checkCapsLock}
           onKeyUp={checkCapsLock}

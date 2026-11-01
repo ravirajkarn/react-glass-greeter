@@ -1,7 +1,5 @@
-import { lightdm } from "nody-greeter-types";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { TbBatteryVerticalEco } from "react-icons/tb";
-
 import {
   MdOutlinePower,
   MdBatteryUnknown,
@@ -21,6 +19,7 @@ import {
   MdBatteryCharging80,
   MdBatteryCharging90,
 } from "react-icons/md";
+import { greeter } from "../services/WebGreeter";
 
 const batteryIcons: Record<string, React.ElementType> = {
   MdBattery20,
@@ -37,18 +36,19 @@ const batteryIcons: Record<string, React.ElementType> = {
   MdBatteryCharging90,
 };
 
-interface BatteryProps {
+export interface BatteryProps {
   className?: string;
 }
 
 interface IconProps {
   className?: string;
-  level?: number;
-  status?: string;
+  level: number;
+  status: string;
+  hasBattery: boolean;
 }
 
-const PowerIcon = ({ level = 0, className = "", status = "unknown" }: IconProps) => {
-  if (!lightdm.can_access_battery) return <MdOutlinePower className={className} />;
+const PowerIcon = ({ level, className = "", status, hasBattery }: IconProps) => {
+  if (!hasBattery) return <MdOutlinePower className={className} />;
   if (!status || status === "unknown") return <MdBatteryUnknown className={className} />;
 
   if (level < 20 && status !== "charging") return <MdBatteryAlert className={className} />;
@@ -74,32 +74,53 @@ const PowerIcon = ({ level = 0, className = "", status = "unknown" }: IconProps)
 };
 
 export default function Battery({ className = "" }: BatteryProps) {
-  const [battery, setBattery] = useState<number>(0);
-  const [status, setStatus] = useState<string>("unknown");
+  const hasBattery = greeter.canAccessBattery();
+
+  const [batteryState, setBatteryState] = useState(() => {
+    if (!hasBattery) return { level: 0, status: "unknown" };
+    const data = greeter.batteryData();
+    return {
+      level: Math.max(0, Math.min(100, Number(data.level) || 0)),
+      status: (data.status || "unknown").toLowerCase(),
+    };
+  });
 
   useEffect(() => {
-    if (!lightdm.can_access_battery || !lightdm.battery_data) return;
+    if (!hasBattery) return;
 
-    const updateBatteryState = () => {
-      setBattery(lightdm.battery_data.level);
-      setStatus(lightdm.battery_data.status.toLowerCase());
+    const syncBattery = () => {
+      const data = greeter.batteryData();
+      setBatteryState({
+        level: Math.max(0, Math.min(100, Number(data.level) || 0)),
+        status: (data.status || "unknown").toLowerCase(),
+      });
     };
 
-    updateBatteryState();
+    syncBattery();
 
-    lightdm.battery_update?.connect(updateBatteryState);
+    return greeter.onBatteryUpdate(syncBattery);
+  }, [hasBattery]);
 
-    return () => {
-      lightdm.battery_update?.disconnect(updateBatteryState);
-    };
-  }, []);
+  const isCritical = hasBattery && batteryState.level < 20 && batteryState.status !== "charging";
 
   return (
-    <div className={`${className}`}>
-      <div className="flex items-center gap-1">
-        <span>{battery}%</span>
-        <PowerIcon status={status} level={battery} className="text-xl rotate-90" />
-      </div>
+    <div
+      aria-label={
+        hasBattery
+          ? `Battery ${batteryState.level}%, ${batteryState.status}`
+          : "Connected to AC power"
+      }
+      className={`inline-flex items-center gap-1.5 select-none ${
+        isCritical ? "text-red-400 font-semibold" : ""
+      } ${className}`}
+    >
+      {hasBattery && <span>{batteryState.level}%</span>}
+      <PowerIcon
+        hasBattery={hasBattery}
+        status={batteryState.status}
+        level={batteryState.level}
+        className="text-xl rotate-90"
+      />
     </div>
   );
 }

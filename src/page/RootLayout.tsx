@@ -4,7 +4,6 @@ import useDynamicTheme from "../component/theme";
 import "./rootLayout.css";
 import DateTime from "../component/DateTime";
 import { ClockProvider } from "../context/ClockProvider";
-import React, { useState } from "react";
 import Weather from "../component/Weather";
 import Player from "../component/Music";
 import Event from "../component/Events";
@@ -12,35 +11,17 @@ import Battery from "../component/Battery";
 import Notification from "../component/Notification";
 import AnimatedOutlet from "../component/AnimatedOutlet";
 import { AnimatePresence, motion } from "motion/react";
+import { useResizable } from "../hooks/useResizable";
 
 export default function RootLayout() {
   const defaultWidth: number = 500;
-  const [lWidth, setLWidth] = useState<number>(defaultWidth);
+  const { width, startResize } = useResizable({
+    initialWidth: defaultWidth,
+    minWidth: 500,
+    maxWidth: 1000,
+  });
 
   useDynamicTheme(DefaultBG);
-
-  function startResize(event: React.MouseEvent<HTMLDivElement>) {
-    event.preventDefault();
-
-    const startX = event.clientX;
-    const initialWidth = lWidth;
-
-    const handleMouseMove = (e: MouseEvent) => {
-      const dx = e.clientX - startX;
-      let newWidth = initialWidth - dx;
-      setLWidth(Math.max(defaultWidth, Math.min(newWidth, 1000)));
-    };
-
-    const handleMouseUp = () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
-      document.body.style.cursor = "default";
-    };
-
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
-    document.body.style.cursor = "ew-resize";
-  }
 
   return (
     <AnimatePresence>
@@ -62,7 +43,7 @@ export default function RootLayout() {
 
               {/* Right Side: Info Panel */}
               <div
-                style={{ width: `${lWidth}px` }}
+                style={{ width: `${width}px` }}
                 className="[backdrop-filter:url(#glass-distortion)_blur(10px)] border-l border-white/20 flex flex-col p-8 relative shadow-2xl transition-none overflow-auto scrollbar-thin"
               >
                 <div

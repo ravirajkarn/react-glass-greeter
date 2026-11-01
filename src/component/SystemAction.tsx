@@ -67,99 +67,59 @@
 import React, { useMemo, useCallback } from "react";
 import { useNavigate } from "react-router";
 import { PiLockKeyThin } from "react-icons/pi";
+import { greeter, type GreeterPower } from "../services/WebGreeter";
 
-type PowerActionType = "hibernate" | "restart" | "shutdown";
+export type ActionId = "switch_user" | "hibernate" | "restart" | "shutdown";
 
-interface PowerManager {
-  isSupported: (action: PowerActionType) => boolean;
-  execute: (action: PowerActionType) => void;
-}
-
-function useSystemPower(): PowerManager {
-  const ldm = typeof window !== "undefined" ? (window as any).lightdm : undefined;
-
-  const isSupported = useCallback(
-    (action: PowerActionType): boolean => {
-      switch (action) {
-        case "hibernate":
-          return ldm?.can_hibernate ?? true;
-        case "restart":
-          return ldm?.can_restart ?? true;
-        case "shutdown":
-          return ldm?.can_shutdown ?? true;
-        default:
-          return false;
-      }
-    },
-    [ldm],
-  );
-
-  const execute = useCallback(
-    (action: PowerActionType): void => {
-      if (!isSupported(action)) {
-        console.warn(`[SystemPower] ${action} is disabled by system policy.`);
-        return;
-      }
-
-      if (ldm) {
-        if (action === "hibernate") ldm.hibernate();
-        if (action === "restart") ldm.restart();
-        if (action === "shutdown") ldm.shutdown();
-      } else {
-        console.info(`[Dev Environment] Executed mock power action: ${action}`);
-      }
-    },
-    [ldm, isSupported],
-  );
-
-  return { isSupported, execute };
-}
-
-interface SystemActionProps {
-  className?: string;
-  onActionTriggered?: (action: string) => void;
-}
-
-interface ActionConfig {
-  id: PowerActionType | "switch_user";
+export interface ActionConfig {
+  id: ActionId;
   label: string;
   isExecutable: boolean;
   onTrigger: () => void;
 }
 
+export interface SystemActionProps {
+  className?: string;
+  onActionTriggered?: (action: ActionId) => void;
+  // DIP & ISP: Depend on the segregated GreeterPower abstraction, defaulting to the singleton
+  powerService?: GreeterPower;
+}
+
 const SystemAction = React.memo(function SystemAction({
   className = "",
   onActionTriggered,
+  powerService = greeter,
 }: SystemActionProps) {
   const navigate = useNavigate();
-  const powerManager = useSystemPower();
 
+  // OCP: Declarative action list—no switch statements or if/else chains required
   const actions: ActionConfig[] = useMemo(
     () => [
       {
         id: "switch_user",
         label: "Switch user",
         isExecutable: true,
-        onTrigger: () => navigate("/lockScreen"),
+        onTrigger: () => navigate("/"),
       },
       {
         id: "restart",
         label: "Restart",
-        isExecutable: powerManager.isSupported("restart"),
-        onTrigger: () => powerManager.execute("restart"),
+        isExecutable: powerService.canRestart(),
+        onTrigger: () => powerService.restart(),
       },
       {
         id: "shutdown",
         label: "Shut down",
-        isExecutable: powerManager.isSupported("shutdown"),
-        onTrigger: () => powerManager.execute("shutdown"),
+        isExecutable: powerService.canShutdown(),
+        onTrigger: () => powerService.shutdown(),
       },
     ],
-    [powerManager, navigate],
+    [powerService, navigate],
   );
 
   const handleTrigger = useCallback(
     (action: ActionConfig) => {
+      if (!action.isExecutable) return;
       action.onTrigger();
       onActionTriggered?.(action.id);
     },
