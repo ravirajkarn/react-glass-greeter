@@ -7,8 +7,8 @@ export const router = createMemoryRouter(
   createRoutesFromElements(
     <>
       <Route path="/" element={<RootLayout />}>
-        <Route path="lockScreen" element={<LockScreen />} />
-        <Route index element={<Login />} />
+        <Route index element={<LockScreen />} />
+        <Route path="/login" element={<Login />} />
       </Route>
     </>,
   ),

@@ -1,6 +1,6 @@
 import DateTime from "../component/DateTime";
 import SystemAction from "../component/SystemAction";
-import User from "../component/User";
+import UserForm from "../component/UserForm";
 
 function Login() {
   return (
@@ -12,7 +12,7 @@ function Login() {
 
       {/* Middle: Login Section (Centered vertically) */}
       <div className="absolute top-1/2 left-16">
-        <User />
+        <UserForm />
       </div>
 
       {/* Bottom Left: System Actions */}

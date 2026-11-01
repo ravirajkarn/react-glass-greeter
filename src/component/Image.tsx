@@ -9,7 +9,7 @@ export const CustomImage: React.FC<ImageProps> = ({ src, alt, className, fallbac
 
   if (error || !src) {
     return (
-      <div className="w-full h-full flex items-center justify-center bg-neutral-800 text-neutral-400">
+      <div className="w-full h-full flex items-center justify-center text-neutral-400">
         {fallback}
       </div>
     );
