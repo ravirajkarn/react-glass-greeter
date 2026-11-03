@@ -162,8 +162,4 @@ git push origin feature/your-feature-name
 This project is distributed under the **MIT License**. You are free to use, modify, distribute, and use this software for private or commercial purposes, subject to the terms of the license.
 
 This project is licensed under the MIT License.
-See the [LICENSE](https://www.google.com/search?q=LICENSE) file for details.
-
-```
-
-```
+See the [LICENSE](./LICENSE) file for details.
