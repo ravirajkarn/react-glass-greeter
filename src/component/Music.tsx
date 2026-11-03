@@ -12,8 +12,7 @@ const MOCK_TRACK = {
   title: "Midnight City",
   artist: "M83",
   // A royalty-free abstract synthwave image for the album cover placeholder
-  cover:
-    "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=200&h=200&auto=format&fit=crop",
+  cover: "",
   progress: 35, // percentage
   currentTime: "1:24",
   totalTime: "4:03",

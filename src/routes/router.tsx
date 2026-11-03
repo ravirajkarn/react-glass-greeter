@@ -1,7 +1,9 @@
 import { createMemoryRouter, createRoutesFromElements, Route } from "react-router";
 import RootLayout from "../page/RootLayout.tsx";
-import LockScreen from "../page/LockScreen.tsx";
-import Login from "../page/Login.tsx";
+import React from "react";
+
+const LockScreen = React.lazy(() => import("../page/LockScreen.tsx"));
+const Login = React.lazy(() => import("../page/Login.tsx"));
 
 export const router = createMemoryRouter(
   createRoutesFromElements(
