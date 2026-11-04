@@ -4,6 +4,13 @@
 
 ---
 
+## 💻 Preview
+
+<div style="display: flex; gap: 10px;">
+  <img src="assets/ravirajkarn.github.io_react-glass-greeter_.png" alt="Image 2" style="width: 49%;" />
+  <img src="assets/ravirajkarn.github.io_react-glass-greeter_ (1).png" alt="Image 1" style="width: 49%;" />
+</div>
+
 ## 🚀 Features
 
 - **Dark Glassmorphism UI:** Translucent frosted-glass panels (`backdrop-blur`), subtle borders, and smooth layout transitions.
